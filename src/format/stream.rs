@@ -21,6 +21,7 @@ extern "C" {
         key: *const c_char,
         value: *const c_char,
     ) -> c_int;
+    fn ffw_stream_get_id(stream: *const c_void) -> i32;
 }
 
 /// Stream.
@@ -103,6 +104,10 @@ impl Stream {
         if ret < 0 {
             panic!("unable to allocate metadata");
         }
+    }
+
+    pub fn get_stream_id(&self) -> i32 {
+        unsafe { ffw_stream_get_id(self.ptr) }
     }
 }
 

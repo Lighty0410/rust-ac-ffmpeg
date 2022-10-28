@@ -81,6 +81,26 @@ int ffw_muxer_new_stream(Muxer* muxer, const AVCodecParameters* params) {
     return s->index;
 }
 
+int ffw_muxer_new_stream_with_id(Muxer* muxer, const AVCodecParameters* params, int id) {
+    AVStream* s;
+    int ret;
+
+    s = avformat_new_stream(muxer->fc, NULL);
+    if (s == NULL) {
+        return AVERROR(ENOMEM);
+    }
+
+    ret = avcodec_parameters_copy(s->codecpar, params);
+    if (ret < 0) {
+        return ret;
+    }
+
+    s->codecpar->codec_tag = 0;
+    s->id = id;
+
+    return s->index;
+}
+
 int ffw_muxer_init(
     Muxer* muxer,
     AVIOContext* avio_context,

@@ -25,6 +25,7 @@ extern "C" {
     fn ffw_muxer_get_nb_streams(muxer: *const c_void) -> c_uint;
     fn ffw_muxer_get_stream(muxer: *mut c_void, stream_index: c_uint) -> *mut c_void;
     fn ffw_muxer_new_stream(muxer: *mut c_void, params: *const c_void) -> c_int;
+    fn ffw_muxer_new_stream_with_id(muxer: *mut c_void, params: *const c_void, id: i32) -> c_int;
     fn ffw_muxer_init(muxer: *mut c_void, io_context: *mut c_void, format: *const c_void) -> c_int;
     fn ffw_muxer_set_initial_option(
         muxer: *mut c_void,
@@ -79,6 +80,30 @@ impl MuxerBuilder {
     /// Add a new stream with given parameters and return index of the new stream.
     pub fn add_stream(&mut self, params: &CodecParameters) -> Result<usize, Error> {
         let stream_index = unsafe { ffw_muxer_new_stream(self.ptr, params.as_ptr()) };
+
+        if stream_index < 0 {
+            return Err(Error::from_raw_error_code(stream_index));
+        }
+
+        let stream = unsafe { ffw_muxer_get_stream(self.ptr, stream_index as _) };
+
+        if stream.is_null() {
+            panic!("stream was not created");
+        }
+
+        let stream = unsafe { Stream::from_raw_ptr(stream) };
+
+        self.streams.push(stream);
+
+        Ok(stream_index as usize)
+    }
+
+    pub fn add_stream_with_id(
+        &mut self,
+        params: &CodecParameters,
+        id: i32,
+    ) -> Result<usize, Error> {
+        let stream_index = unsafe { ffw_muxer_new_stream_with_id(self.ptr, params.as_ptr(), id) };
 
         if stream_index < 0 {
             return Err(Error::from_raw_error_code(stream_index));
